@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    service: elasticsearch
+  namespace: opendistro
+spec:
+  type: LoadBalancer
+  selector:
+    component: elasticsearch
+  ports:
+  - port: 9200
+    targetPort: 9200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  labels:
+    service: kibana
+  namespace: opendistro
+spec:
+  type: NodePort
+  selector:
+    component: elasticsearch
+  ports:
+  - port: 5601
+    targetPort: 5601
