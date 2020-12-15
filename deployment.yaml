@@ -29,6 +29,9 @@ spec:
         - containerPort: 9600
           name: analyzer
           protocol: TCP
+        volumeMounts:
+        - name: opendistro-persistent-storage
+          mountPath: /usr/share/elasticsearch/data
       - name: kibana
         image: amazon/opendistro-for-elasticsearch-kibana:1.10.1
         env:
@@ -40,9 +43,6 @@ spec:
         - containerPort: 5601
           name: http
           protocol: TCP
-        volumeMounts:
-        - name: opendistro-persistent-storage
-          mountPath: /usr/share/elasticsearch/data
       volumes:
       - name: opendistro-persistent-storage
         persistentVolumeClaim:
