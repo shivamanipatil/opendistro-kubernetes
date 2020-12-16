@@ -1,9 +1,15 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: elasticsearch
   namespace: opendistro
+  labels:
+    service: elasticsearch
 spec:
+  serviceName: elastic-service
+  # NOTE: This is number of nodes that we want to run
+  # you may update this
+  replicas: 2
   selector:
     matchLabels:
       component: elasticsearch
@@ -12,6 +18,18 @@ spec:
       labels:
         component: elasticsearch
     spec:
+      initContainers:
+      - name: fix-the-volume-permission
+        image: busybox
+        command:
+        - sh
+        - -c
+        - chown -R 1000:1000 /usr/share/elasticsearch/data
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: opendistro-pv-claim
+          mountPath: /usr/share/elasticsearch/data
       containers:
       - name: elasticsearch
         image: amazon/opendistro-for-elasticsearch:1.10.1
@@ -30,7 +48,7 @@ spec:
           name: analyzer
           protocol: TCP
         volumeMounts:
-        - name: opendistro-persistent-storage
+        - name: opendistro-pv-claim
           mountPath: /usr/share/elasticsearch/data
       - name: kibana
         image: amazon/opendistro-for-elasticsearch-kibana:1.10.1
@@ -43,7 +61,30 @@ spec:
         - containerPort: 5601
           name: http
           protocol: TCP
-      volumes:
-      - name: opendistro-persistent-storage
-        persistentVolumeClaim:
-          claimName: opendistro-pv-claim
+
+  volumeClaimTemplates:
+  - metadata:
+      name: opendistro-pv-claim
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastic-service
+  namespace: opendistro
+spec:
+  clusterIP: None
+  ports:
+  - name: elasticsearch
+    port: 9200
+    targetPort: 9200
+  - name: kibana
+    port: 5601
+    targetPort: 5601
+  selector:
+    component: elasticsearch

@@ -13,6 +13,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: opendistro-cluster-ip-service
+            name: elastic-service
             port:
               number: 5601
